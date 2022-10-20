@@ -27,8 +27,10 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
     
     }
     
+
+    // This immediately breaks for #[cast(f32 => from_le_bytes)]
     // Walk the Enum and get the attribute types
-    fn get_cast_types(data_enum: syn::DataEnum, mut cast_types: &mut Vec<proc_macro2::Ident>)  {
+    fn get_cast_types(data_enum: syn::DataEnum, cast_types: &mut Vec<proc_macro2::Ident>)  {
         data_enum.variants.into_iter()
             .map(|variant| variant)
                 .for_each(|variant| variant.attrs.into_iter().map(|attr|attr)
