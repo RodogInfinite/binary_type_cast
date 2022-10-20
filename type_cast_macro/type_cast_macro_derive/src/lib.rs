@@ -69,41 +69,45 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
         data_enum
     ) = ast.data
     {
-
+        // Not sure of a nicer way to achieve getting the values into this scope.
+        let mut cast_types: Vec<proc_macro2::Ident> = vec![];
         data_enum.variants.into_iter()
-        .map(|variant| variant)
-            .for_each(|variant| variant.attrs.into_iter().map(|attr|attr)
-                .for_each(|attr| attr.tokens.into_iter().map(|token|token)
-                    .for_each(|token|{
-                        if let proc_macro2::TokenTree::Group(group) = token {
-                            group.stream().into_iter().map(|stream| 
-                                match stream {
-                                    proc_macro2::TokenTree::Ident(ref ident) => {
-                                        eprintln!("IDENT {:#?}",ident);
-                                        ident.clone()
-                                    },
-                                    proc_macro2::TokenTree::Group(array_group) => {
-                                        array_group.stream().into_iter().map(|array_stream| 
-                                            match array_stream {
-                                                proc_macro2::TokenTree::Ident(ref ident) => {
-                                                    eprintln!("INNER IDENT {:#?}",ident);
-                                                    ident.clone()
-                                                    },
-                                                    tt => panic!("Expected '' found {}",tt)
-                                            }).next().unwrap()
-                                    },
-                                    tt => panic!("Expected '' found {}",tt),
-                                }).collect::<Vec<proc_macro2::Ident>>();
-                        } else {
-                            unimplemented!();
-                        };
-                    }
+            .map(|variant| variant)
+                .for_each(|variant| variant.attrs.into_iter().map(|attr|attr)
+                    .for_each(|attr| attr.tokens.into_iter().map(|token|token)
+                        .for_each(|token|{
+                            if let proc_macro2::TokenTree::Group(group) = token {
+                                let mut type_ident = group.stream().into_iter().map(|stream| 
+                                    match stream {
+                                        proc_macro2::TokenTree::Ident(ref ident) => {
+                                            eprintln!("IDENT {:#?}",ident);
+                                            ident.clone()
+                                        },
+                                        proc_macro2::TokenTree::Group(array_group) => {
+                                            array_group.stream().into_iter().map(|array_stream| 
+                                                match array_stream {
+                                                    proc_macro2::TokenTree::Ident(ref ident) => {
+                                                        eprintln!("INNER IDENT {:#?}",ident);
+                                                        ident.clone()
+                                                        },
+                                                        tt => panic!("Expected '' found {}",tt)
+                                                }).next().unwrap()
+                                        },
+                                        tt => panic!("Expected '' found {}",tt),
+                                    }).collect::<Vec<proc_macro2::Ident>>(); 
+
+                                    cast_types.push(type_ident.pop().unwrap()); // Seems silly to put it into a vec just to pop it out and push it to another in another scope. Not sure of another solution right now
+                            } else {
+                                unimplemented!();
+                            };
+                        })
+                        
                     )
-                )
-            ) ; 
+                );
+                eprintln!("CAST TYPES {:#?}",cast_types);
     };
        //let cast =  cast_types(data_enum);
-       //eprintln!("CAST {:#?}",cast);
+       
 
 
        
