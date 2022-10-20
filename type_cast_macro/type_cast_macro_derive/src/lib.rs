@@ -53,42 +53,13 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
     }
     
     // not even sure this is the right path. Need it to fill with 
-    fn get_cast_types(data_enum: syn::DataEnum) -> Vec<&proc_macro2::Ident> {
-        let idents: Vec<proc_macro2::Ident> = data_enum.variants.into_iter()
-            .map(|variant| variant)
-                .for_each(|variant| variant.attrs.into_iter().map(|attr|attr)
-                    .for_each(|attr| attr.tokens.into_iter().map(|token|token)
-                        .for_each(|token|
-                            if let proc_macro2::TokenTree::Group(group) = token {
-                                group.stream().into_iter().map(|stream| 
-                                    match stream {
-                                        proc_macro2::TokenTree::Ident(ref ident) => {
-                                            eprintln!("IDENT {:#?}",ident);
-                                            ident.clone()
-                                        },
-                                        proc_macro2::TokenTree::Group(array_group) => {
-                                            array_group.stream().into_iter().map(|array_stream| 
-                                                match array_stream {
-                                                    proc_macro2::TokenTree::Ident(ref ident) => {
-                                                        eprintln!("INNER IDENT {:#?}",ident);
-                                                        ident.clone()
-                                                        },
-                                                        tt => panic!("Expected '' found {}",tt)
-                                                }).next().unwrap()
-                                        },
-                                        tt => panic!("Expected '' found {}",tt),
-                                    })
-                            } else {
-                                unimplemented!();
-                            }
-                        )
-                    )
-                ) ; 
-
-                let v: Vec<proc_macro2::Ident> = idents.iter().collect();
-                v
-
-    } 
+    //fn get_cast_types(data_enum: syn::DataEnum) -> Vec<proc_macro2::Ident> {
+    //     
+    //
+    //            //let v: Vec<proc_macro2::Ident> = idents.iter().collect();
+    //            //v
+    //
+    //} 
 
 
     
@@ -99,7 +70,37 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
     ) = ast.data
     {
 
-              
+        data_enum.variants.into_iter()
+        .map(|variant| variant)
+            .for_each(|variant| variant.attrs.into_iter().map(|attr|attr)
+                .for_each(|attr| attr.tokens.into_iter().map(|token|token)
+                    .for_each(|token|{
+                        if let proc_macro2::TokenTree::Group(group) = token {
+                            group.stream().into_iter().map(|stream| 
+                                match stream {
+                                    proc_macro2::TokenTree::Ident(ref ident) => {
+                                        eprintln!("IDENT {:#?}",ident);
+                                        ident.clone()
+                                    },
+                                    proc_macro2::TokenTree::Group(array_group) => {
+                                        array_group.stream().into_iter().map(|array_stream| 
+                                            match array_stream {
+                                                proc_macro2::TokenTree::Ident(ref ident) => {
+                                                    eprintln!("INNER IDENT {:#?}",ident);
+                                                    ident.clone()
+                                                    },
+                                                    tt => panic!("Expected '' found {}",tt)
+                                            }).next().unwrap()
+                                    },
+                                    tt => panic!("Expected '' found {}",tt),
+                                }).collect::<Vec<proc_macro2::Ident>>();
+                        } else {
+                            unimplemented!();
+                        };
+                    }
+                    )
+                )
+            ) ; 
     };
        //let cast =  cast_types(data_enum);
        //eprintln!("CAST {:#?}",cast);

@@ -11,7 +11,7 @@ Crate for testing the type_cast_derive proc_macro
 #[derive(Clone, Copy, Debug)]
 pub enum DataTypes {
     // 4 bytes
-    #[cast(f32 => from_le_bytes)] // #[cast(f32=> from_be_bytes)] should also work 
+    #[cast(f32 => from_le_bytes)] // #[cast(f32 => from_be_bytes)] should also work 
     IEEE754LSBSingle,
     // 8 bytes
     #[cast(f64 => from_le_bytes)] // #[cast(f64 => from_be_bytes)] should also work 
