@@ -13,12 +13,12 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
     //eprintln!("Input {:#?}",ast.data);
     let name = &ast.ident;
 
-    //let variants = match ast.data.clone() {
-    //    syn::Data::Enum(enum_item) => {
-    //        enum_item.variants.into_iter().map(|v| v.ident)
-    //    }
-    //    _ => panic!("DataCast only works on enums"),
-    //};
+    let variants = match ast.data.clone() {
+        syn::Data::Enum(enum_item) => {
+            enum_item.variants.into_iter().map(|v| v.ident)
+        }
+        _ => panic!("DataCast only works on enums"),
+    };
 
     
     //let punctuated = if let syn::Data::Enum(
@@ -63,14 +63,13 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
 
 
     
-
+    // Not sure of a nicer way to achieve getting the values into this scope.
+    let mut cast_types: Vec<proc_macro2::Ident> = vec![];
 
     let punctuated = if let syn::Data::Enum(
         data_enum
     ) = ast.data
     {
-        // Not sure of a nicer way to achieve getting the values into this scope.
-        let mut cast_types: Vec<proc_macro2::Ident> = vec![];
         data_enum.variants.into_iter()
             .map(|variant| variant)
                 .for_each(|variant| variant.attrs.into_iter().map(|attr|attr)
@@ -106,73 +105,10 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                 );
                 eprintln!("CAST TYPES {:#?}",cast_types);
     };
-       //let cast =  cast_types(data_enum);
-       
-
-
-       
-       //eprintln!("ATTR IDENT? {:#?}",attr_ident);
-    //} else {
-    //    unimplemented!();
-    //};
-
-    //eprintln!("attrs? {:#?}",punctuated);
-
-    /*
-    for variant in punctuated.iter() {
-        let x = if let syn::Variant{ref attrs, ..} = variant
-        {
-            for attr in attrs {
-                //eprintln!("SEGMENTS {:#?}",attr.path.segments);
-                if attr.path.segments[0].ident == "cast" {
-                    let tokens = attr.tokens.clone().into_iter();
-                    for token in tokens {
-                        if let proc_macro2::TokenTree::Group(group) = token {
-                            //for g in group.unwrap() {
-                            let mut stream = group.stream().into_iter();
-                            for s in stream {
-                                eprintln!("STREAM {:#?}",s);
-                                match s {
-                                    proc_macro2::TokenTree::Ident(ref ident) => {
-                                        //eprintln!("IDENT {:#?}",ident);
-                                        //ident
-                                        
-                                    },
-                                    proc_macro2::TokenTree::Group(array_group) => {
-                                        //eprintln!("INNER GROUP? {:#?}",inner_group);
-                                        let mut array_stream = array_group.stream().into_iter();
-                                        let j = match array_stream.next().unwrap().clone() {
-                                            proc_macro2::TokenTree::Ident(ref ident) => {
-                                            eprintln!("INNER IDENT {:#?}",ident);
-                                            //ident
-                                            },
-                                            tt => panic!("Expected '' found {}",tt)
-                                        };
-                                    },
-                                    tt => panic!("Expected '' found {}",tt),
-                                }
-                            }
-                        } else {
-                            unimplemented!();
-                        }
-                    }
-                    
-                        
-    
-                    
-                }
-            }
-        } else {
-            unimplemented!();
-        };
-    
-    }
-    //eprintln!("YYYYYYYYYYYYY {}",y);
-     */
-   /* 
+   
     let gen = quote! {
         enum DataKind{
-            #(#variants,)*
+            #(#variants(#cast_types),)*
         }
 
         impl DataKind  {
@@ -184,8 +120,8 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
     };
     gen.into()
     
-*/
-    TokenStream::new()
+
+    //TokenStream::new()
     
 
 }
