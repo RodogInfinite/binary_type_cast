@@ -20,56 +20,15 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
         _ => panic!("DataCast only works on enums"),
     };
 
+
     
-    //let punctuated = if let syn::Data::Enum(
-    //    syn::DataEnum{ ref variants,..}
-    //) = ast.data
-    //{
-    //   // eprintln!("Variants {:#?}",variants);
-    //    variants
-    //} else {
-    //    unimplemented!();
-    //};
-
-    // Rewrite to use these
-    // https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.for_each
-    // https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.fold
-    // If using casts to write types in DataKind, then consider defaulting to use type variants that define theirs already
-    /*
-
-    #[cast(f32)]      
-    IEEE754LSBSingle == IEEE754LSBSingle(f32)
-    
-    enum DataKind{
-            #(#variants(#(#cast_types)*),)*
-    }
-
-    current path would be that #cast_types come from `let cast_types = get_cast_types(data_enum)`
-
-    */
     fn cast_attribute(data_enum: syn::DataEnum) -> bool {
         data_enum.variants.into_iter().flat_map( |variant| variant.attrs.into_iter().filter_map(|attr| Some(attr.path.segments[0].ident == "cast"))).next().unwrap()
     
     }
     
-    // not even sure this is the right path. Need it to fill with 
-    //fn get_cast_types(data_enum: syn::DataEnum) -> Vec<proc_macro2::Ident> {
-    //     
-    //
-    //            //let v: Vec<proc_macro2::Ident> = idents.iter().collect();
-    //            //v
-    //
-    //} 
-
-
-    
-    // Not sure of a nicer way to achieve getting the values into this scope.
-    let mut cast_types: Vec<proc_macro2::Ident> = vec![];
-
-    let punctuated = if let syn::Data::Enum(
-        data_enum
-    ) = ast.data
-    {
+    // Walk the Enum and get the attribute types
+    fn get_cast_types(data_enum: syn::DataEnum, mut cast_types: &mut Vec<proc_macro2::Ident>)  {
         data_enum.variants.into_iter()
             .map(|variant| variant)
                 .for_each(|variant| variant.attrs.into_iter().map(|attr|attr)
@@ -104,6 +63,21 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                     )
                 );
                 eprintln!("CAST TYPES {:#?}",cast_types);
+    } 
+
+
+    
+    // Not sure of a nicer way to achieve getting the values into this scope.
+    let mut cast_types: Vec<proc_macro2::Ident> = vec![];
+
+    let _ = if let syn::Data::Enum(
+        data_enum
+    ) = ast.data
+    {   
+        get_cast_types(data_enum, &mut cast_types) 
+
+    } else {
+        unimplemented!();
     };
    
     let gen = quote! {
