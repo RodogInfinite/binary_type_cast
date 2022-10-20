@@ -1,0 +1,3 @@
+expand:
+    clear
+    cargo expand
