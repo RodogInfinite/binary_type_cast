@@ -8,7 +8,7 @@ Crate for testing the type_cast_derive proc_macro
 
 
 ```Rust
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, DataCast)]
 pub enum DataTypes {
     // 4 bytes
     #[cast(f32 => from_le_bytes)] // #[cast(f32 => from_be_bytes)] should also work 
