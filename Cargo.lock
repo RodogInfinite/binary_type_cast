@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "advanced"
+name = "binary_type_cast"
 version = "0.1.0"
 dependencies = [
  "type_cast_macro",
