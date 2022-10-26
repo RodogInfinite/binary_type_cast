@@ -144,11 +144,9 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                             ]
                         }),
                     )*
-                    
                 }
             } 
         } 
     };
     gen.into()
-
 }
