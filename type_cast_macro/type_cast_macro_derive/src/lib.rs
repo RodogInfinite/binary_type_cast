@@ -130,14 +130,14 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
     };
    
     let gen = quote! {
-
+        
         enum #data_kind_name {
             #(#variants(#cast_types),)*
             #(#complex_variants(#complex_cast_types),)*
         }
 
-        impl #data_kind_name  {
-            fn parse(&self, input: &mut &[u8]) -> #data_kind_name {
+        impl #name  {
+            fn parse(self, input: &mut &[u8]) -> #data_kind_name {
                 match self{
                     #(#data_type_names::#variants => #data_kind_names::#variants ({
                         let (bytes, _) = input.split_at(
@@ -146,11 +146,6 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                         <#cast_types>::#conversion(bytes.try_into().unwrap())
                     }),
                     )*
-                    
-                }
-            } 
-            fn parse_complex(&self, input: &mut &[u8]) -> #data_kind_name {
-                match self{
                     #(#complex_data_type_names::#complex_variants => #complex_data_kind_names::#complex_variants ({
                         let (bytes, rest) = input.split_at(
                             std::mem::size_of::<#cast_types>()
@@ -162,8 +157,10 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
 
                     }),
                     )*
+                    
                 }
-                }
+            } 
+            
             } 
     };
     gen.into()
