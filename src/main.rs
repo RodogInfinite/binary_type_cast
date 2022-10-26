@@ -14,7 +14,7 @@ pub enum DataTypes {
     #[cast([f32;2] => from_le_bytes)]
     IEEE754LSBSingleArr,
     // 8 bytes
-    #[cast([f64;2])]
+    #[cast([f64;2] => from_le_bytes)]
     IEEE754MSBDoubleArr,
 }
 

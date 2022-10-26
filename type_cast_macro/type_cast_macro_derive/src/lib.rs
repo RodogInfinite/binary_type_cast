@@ -3,9 +3,7 @@ extern crate proc_macro;
 
 use core::num;
 use std::{assert_matches::assert_matches};
-
 use proc_macro::TokenStream;
-
 use quote::{quote, format_ident};
 use syn;
 use std::iter::repeat;
@@ -38,14 +36,14 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
     
     
 
-    // This immediately breaks for #[cast(f32 => from_le_bytes)]
     // Walk the Enum and get the attribute types
     fn get_cast_types(
         data_enum: syn::DataEnum, 
         cast_types: &mut Vec<proc_macro2::Ident>, 
         complex_cast_types: &mut Vec<proc_macro2::Group>,
-        conversion: &mut Vec<proc_macro2::Ident>) {
-        
+        conversion: &mut Vec<proc_macro2::Ident>,
+        complex_conversion: &mut Vec<proc_macro2::Ident>) {
+        let mut group_bool = false;
         data_enum.variants.into_iter()
             .map(|variant| variant)
                 .for_each(|variant| variant.attrs.into_iter().map(|attr|attr)
@@ -53,6 +51,7 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                         .for_each(|token|{
                             if let proc_macro2::TokenTree::Group(group) = token {
                                 eprintln!("GROUP {:#?}",group);
+                                group_bool = false;
                                 group.stream().into_iter().map(|stream| stream)
                                     .for_each(|stream|
                                         match stream {
@@ -65,21 +64,28 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                                                         cast_types.push(ident.clone())
                                                     },
                                                     "from_le_bytes" => {
-                                                        conversion.push(ident.clone())
+                                                        if group_bool == true {
+                                                            complex_conversion.push(ident.clone())
+                                                        } else {conversion.push(ident.clone())}
+                                                        
                                                     },
                                                     "from_be_bytes" => {
-                                                        conversion.push(ident.clone())
+                                                        if group_bool == true {
+                                                            complex_conversion.push(ident.clone())
+                                                        } else {conversion.push(ident.clone())}
                                                     },
                                                     i => panic!("Expected valid conversion or valid cast type, found {}",i),
                                                 }
-                                                //ident.clone()
                                             },
                                             proc_macro2::TokenTree::Punct(ref punct) => {
                                                 //eprintln!("PUNCT {:#?}",punct);
                                                 assert_matches!(punct.as_char(), '='| '>');
                                             },
                                             proc_macro2::TokenTree::Group(array_group) => {
+                                                eprintln!("Input {:#?}",array_group);
                                                 complex_cast_types.push(array_group);
+                                                group_bool = true;
+                                                
                                             },
                                             tt => panic!("Expected '' found {}",tt),
                                         }
@@ -96,6 +102,7 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
     let mut cast_types = vec![];
     let mut complex_cast_types = vec![];
     let mut conversion = vec![];
+    let mut complex_conversion = vec![];
     let data_type_names = repeat(name.clone());
     let complex_data_type_names = data_type_names.clone();
     let data_kind_name = format_ident!("{}Cast",name.clone());
@@ -107,8 +114,9 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
         data_enum
     ) = ast.data
     {   
-        get_cast_types(data_enum, &mut cast_types, &mut complex_cast_types,&mut conversion); 
-
+        get_cast_types(data_enum, &mut cast_types, &mut complex_cast_types, &mut conversion, &mut complex_conversion); 
+        eprintln!("CONVERSION {:#?}",conversion);
+        eprintln!("COMPLEX CONVERSION {:#?}",complex_conversion);
     } else {
         unimplemented!();
     };
@@ -126,7 +134,7 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                         let (bytes, _) = input.split_at(
                             std::mem::size_of::<#cast_types>()
                         );
-                        <#cast_types>::from_le_bytes(bytes.try_into().unwrap())
+                        <#cast_types>::#conversion(bytes.try_into().unwrap())
 
                     }),
                     )*
@@ -140,8 +148,8 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                             std::mem::size_of::<#cast_types>()
                         );
                         [
-                            <#cast_types>::from_le_bytes(bytes.try_into().unwrap()),
-                            <#cast_types>::from_le_bytes(rest.try_into().unwrap()),
+                            <#cast_types>::#complex_conversion(bytes.try_into().unwrap()),
+                            <#cast_types>::#complex_conversion(rest.try_into().unwrap()),
                         ]
 
                     }),
