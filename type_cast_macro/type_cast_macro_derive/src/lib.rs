@@ -31,11 +31,9 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
     
     fn cast_attribute(data_enum: syn::DataEnum) -> bool {
         data_enum.variants.into_iter().flat_map( |variant| variant.attrs.into_iter().filter_map(|attr| Some(attr.path.segments[0].ident == "cast"))).next().unwrap()
-    
     }
     
     
-
     // Walk the Enum and get the attribute types
     fn get_cast_types(
         data_enum: syn::DataEnum, 
@@ -44,14 +42,18 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
         conversion: &mut Vec<proc_macro2::Ident>,
         complex_conversion: &mut Vec<proc_macro2::Ident>) {
         let mut group_bool = false;
-        data_enum.variants.into_iter()
+        data_enum.clone().variants.into_iter()
             .map(|variant| variant)
                 .for_each(|variant| variant.attrs.into_iter().map(|attr|attr)
                     .for_each(|attr| attr.tokens.into_iter().map(|token|token)
                         .for_each(|token|{
                             if let proc_macro2::TokenTree::Group(group) = token {
                                 eprintln!("GROUP {:#?}",group);
-                                group_bool = false;
+                                // for complex types i.e [f32;2], there's an inner group that matches first and provides the type, 
+                                // then the next loop through the outer group (here) provides the idents for the conversion. 
+                                // group_bool tracks this so that the cast conversions remain correct
+                                group_bool = false; 
+
                                 group.stream().into_iter().map(|stream| stream)
                                     .for_each(|stream|
                                         match stream {
@@ -87,7 +89,7 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                                                 group_bool = true;
                                                 
                                             },
-                                            tt => panic!("Expected '' found {}",tt),
+                                            tt => panic!("{}",tt),
                                         }
                                     );
                                     
@@ -114,14 +116,21 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
         data_enum
     ) = ast.data
     {   
-        get_cast_types(data_enum, &mut cast_types, &mut complex_cast_types, &mut conversion, &mut complex_conversion); 
-        eprintln!("CONVERSION {:#?}",conversion);
-        eprintln!("COMPLEX CONVERSION {:#?}",complex_conversion);
+        match cast_attribute(data_enum.clone()) {
+            true => {get_cast_types(data_enum, &mut cast_types, &mut complex_cast_types, &mut conversion, &mut complex_conversion); 
+                eprintln!("CONVERSION {:#?}",conversion);
+                eprintln!("COMPLEX CONVERSION {:#?}",complex_conversion);
+            }
+            false => panic!("Expected cast")
+            
+        }
+        
     } else {
         unimplemented!();
     };
    
     let gen = quote! {
+
         enum #data_kind_name {
             #(#variants(#cast_types),)*
             #(#complex_variants(#complex_cast_types),)*
@@ -135,7 +144,6 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                             std::mem::size_of::<#cast_types>()
                         );
                         <#cast_types>::#conversion(bytes.try_into().unwrap())
-
                     }),
                     )*
                     
@@ -159,10 +167,6 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
             } 
     };
     gen.into()
-    
-
-    //TokenStream::new()
-    
 
 }
 
