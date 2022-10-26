@@ -14,19 +14,28 @@ pub enum DataTypes {
     IEEE754LSBSingleArr,
     // [8 bytes, 8 bytes]
     #[cast([f64;2] => from_le_bytes)]
+    IEEE754LSBDoubleArr,
+    // [4 bytes, 4 bytes]
+    #[cast([f32;2] => from_be_bytes)]
+    IEEE754MSBSingleArr,
+    // [8 bytes, 8 bytes]
+    #[cast([f64;2] => from_be_bytes)]
     IEEE754MSBDoubleArr,
 }
 
-
 fn main() {
-    let mut data:   &[u8] = &[172, 152, 111, 195];
-    let mut data2:  &[u8] = &[172, 152, 111, 195, 117, 93, 133, 192];
-    let mut data3:  &[u8] = &[172, 152, 111, 195, 117, 93, 133, 192, 172, 152, 111, 195, 117, 93, 133, 192];
-    println!("{:?}\n{:?}\n{:?}\n{:?}\n",
+    let mut data: &[u8] = &[172, 152, 111, 195];
+    let mut data2: &[u8] = &[172, 152, 111, 195, 117, 93, 133, 192];
+    let mut data3: &[u8] = &[
+        172, 152, 111, 195, 117, 93, 133, 192, 172, 152, 111, 195, 117, 93, 133, 192,
+    ];
+    println!(
+        "{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n",
         DataTypes::IEEE754LSBSingle.parse(&mut data),
         DataTypes::IEEE754LSBDouble.parse(&mut data2),
         DataTypes::IEEE754LSBSingleArr.parse(&mut data2),
+        DataTypes::IEEE754LSBDoubleArr.parse(&mut data3),
+        DataTypes::IEEE754MSBSingleArr.parse(&mut data2),
         DataTypes::IEEE754MSBDoubleArr.parse(&mut data3),
-)
-    
+    )
 }
