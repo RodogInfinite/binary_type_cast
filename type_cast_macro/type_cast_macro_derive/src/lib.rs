@@ -36,64 +36,62 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
         complex_conversion: &mut Vec<proc_macro2::Ident>) 
         {
             let mut group_bool = false;
-            data_enum.clone().variants.into_iter()
-                .map(|variant| variant)
-                    .for_each(|variant| variant.attrs.into_iter().map(|attr|attr)
-                        .for_each(|attr| attr.tokens.into_iter().map(|token|token)
-                            .for_each(|token|{
-                                if let proc_macro2::TokenTree::Group(group) = token {
-                                    // for complex types i.e [f32;2], there's an inner group that matches first and provides the type, 
-                                    // then the next loop through the outer group (here) provides the idents for the conversion. 
-                                    // group_bool tracks this so that the cast conversions remain correct
-                                    group_bool = false; 
-                                    group.stream().into_iter().map(|stream| stream)
-                                        .for_each(|stream|
-                                            match stream {
-                                                proc_macro2::TokenTree::Ident(ref ident) => {
-                                                    match ident.clone().to_string().as_str() {
-                                                        "f32"=> {
+            data_enum.clone().variants.into_iter().map(|variant| variant)
+                .for_each(|variant| variant.attrs.into_iter().map(|attr|attr)
+                    .for_each(|attr| attr.tokens.into_iter().map(|token|token)
+                        .for_each(|token|{
+                            if let proc_macro2::TokenTree::Group(group) = token {
+                                // for complex types i.e [f32;2], there's an inner group that matches first and provides the type, 
+                                // then the next loop through the outer group (here) provides the idents for the conversion. 
+                                // group_bool tracks this so that the cast conversions remain correct
+                                group_bool = false; 
+                                group.stream().into_iter().map(|stream| stream)
+                                    .for_each(|stream|
+                                        match stream {
+                                            proc_macro2::TokenTree::Ident(ref ident) => {
+                                                match ident.clone().to_string().as_str() {
+                                                    "f32"=> {
+                                                        cast_types.push(ident.clone())
+                                                    },
+                                                    "f64" => {
+                                                        cast_types.push(ident.clone())
+                                                    },
+                                                    "from_le_bytes" => {
+                                                        if group_bool == true {
+                                                            complex_conversion.push(ident.clone())
+                                                        } else {conversion.push(ident.clone())}
+                                                    },
+                                                    "from_be_bytes" => {
+                                                        if group_bool == true {
+                                                            complex_conversion.push(ident.clone())
+                                                        } else {conversion.push(ident.clone())}
+                                                    },
+                                                    i => panic!("Expected valid conversion or valid cast type, found {}",i),
+                                                }
+                                            },
+                                            proc_macro2::TokenTree::Punct(ref punct) => {
+                                                assert_matches!(punct.as_char(), '='| '>');
+                                            },
+                                            proc_macro2::TokenTree::Group(array_group) => {
+                                                complex_cast_types.push(array_group.clone());
+                                                array_group.stream().into_iter().map(|array_stream| 
+                                                    match array_stream {
+                                                        proc_macro2::TokenTree::Ident(ref ident) => {
                                                             cast_types.push(ident.clone())
-                                                        },
-                                                        "f64" => {
-                                                            cast_types.push(ident.clone())
-                                                        },
-                                                        "from_le_bytes" => {
-                                                            if group_bool == true {
-                                                                complex_conversion.push(ident.clone())
-                                                            } else {conversion.push(ident.clone())}
-                                                        },
-                                                        "from_be_bytes" => {
-                                                            if group_bool == true {
-                                                                complex_conversion.push(ident.clone())
-                                                            } else {conversion.push(ident.clone())}
-                                                        },
-                                                        i => panic!("Expected valid conversion or valid cast type, found {}",i),
+                                                            },
+                                                            tt => panic!("Expected '' found {}",tt)
                                                     }
-                                                },
-                                                proc_macro2::TokenTree::Punct(ref punct) => {
-                                                    assert_matches!(punct.as_char(), '='| '>');
-                                                },
-                                                proc_macro2::TokenTree::Group(array_group) => {
-                                                    complex_cast_types.push(array_group.clone());
-                                                    array_group.stream().into_iter().map(|array_stream| 
-                                                        match array_stream {
-                                                            proc_macro2::TokenTree::Ident(ref ident) => {
-                                                                cast_types.push(ident.clone())
-                                                                },
-                                                                tt => panic!("Expected '' found {}",tt)
-                                                        }).next().unwrap();
-
-                                                    group_bool = true;
-                                                    
-                                                },
-                                                tt => panic!("{}",tt),
-                                            }
-                                        );
-                                    }
+                                                ).next().unwrap();
+                                                group_bool = true;
+                                            },
+                                            tt => panic!("{}",tt),
+                                        }
+                                    );
                                 }
-                            )
+                            }
                         )
                     )
+                )
         } 
 
             
