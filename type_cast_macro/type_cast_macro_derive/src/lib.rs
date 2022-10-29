@@ -33,7 +33,8 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
         cast_types: &mut Vec<proc_macro2::Ident>, 
         complex_cast_types: &mut Vec<proc_macro2::Group>,
         conversion: &mut Vec<proc_macro2::Ident>,
-        complex_conversion: &mut Vec<proc_macro2::Ident>) 
+        complex_conversion: &mut Vec<proc_macro2::Ident>,
+        number_of_array_elements: &mut Vec<proc_macro2::Literal>,) 
         {
             let mut group_bool = false;
             data_enum.clone().variants.into_iter().map(|variant| variant)
@@ -72,16 +73,28 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                                             proc_macro2::TokenTree::Punct(ref punct) => {
                                                 assert_matches!(punct.as_char(), '='| '>');
                                             },
+                                            
                                             proc_macro2::TokenTree::Group(array_group) => {
                                                 complex_cast_types.push(array_group.clone());
-                                                array_group.stream().into_iter().map(|array_stream| 
-                                                    match array_stream {
-                                                        proc_macro2::TokenTree::Ident(ref ident) => {
-                                                            cast_types.push(ident.clone())
+                                                eprintln!("ARRAYGROUP{:#?}",array_group);
+                                                array_group.stream().into_iter().map(|array_stream| array_stream)
+                                                    .for_each(|array_stream|
+                                                        match array_stream {
+                                                            proc_macro2::TokenTree::Ident(ref ident) => {
+                                                                eprintln!("IDENT {:#?}",ident);
+                                                                cast_types.push(ident.clone())
+                                                            },
+                                                            proc_macro2::TokenTree::Punct(ref punct) => {
+                                                                //place holder, no use right now
+                                                                ()
+                                                            },
+                                                            proc_macro2::TokenTree::Literal(ref literal) => {
+                                                                //eprintln!("LITERAL {:#?}",literal.to_string().parse::<u16>().unwrap());
+                                                                number_of_array_elements.push(literal.clone())
                                                             },
                                                             tt => panic!("Expected '' found {}",tt)
-                                                    }
-                                                ).next().unwrap();
+                                                        }
+                                                    );
                                                 group_bool = true;
                                             },
                                             tt => panic!("{}",tt),
@@ -99,6 +112,7 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
     let mut complex_cast_types = vec![];
     let mut conversion = vec![];
     let mut complex_conversion = vec![];
+    let mut number_of_array_elements = vec![];
     let data_type_names = repeat(name.clone());
     let complex_data_type_names = repeat(name.clone());
     let data_kind_name = format_ident!("{}Cast",name.clone());
@@ -110,7 +124,7 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
         data_enum
     ) = ast.data
     {   
-        get_cast_types(data_enum, &mut cast_types, &mut complex_cast_types, &mut conversion, &mut complex_conversion);
+        get_cast_types(data_enum, &mut cast_types, &mut complex_cast_types, &mut conversion, &mut complex_conversion, &mut number_of_array_elements);
     } else {
         unimplemented!();
     };
@@ -133,7 +147,7 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                             <#cast_types>::#conversion(bytes.try_into().unwrap())
                         }),
                     )*
-                    #(
+                    /*#(
                         #complex_data_type_names::#complex_variants => #complex_data_kind_names::#complex_variants ({
                             let (bytes, rest) = input.split_at(
                                 std::mem::size_of::<#cast_types>()
@@ -142,6 +156,21 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                                 <#cast_types>::#complex_conversion(bytes.try_into().unwrap()),
                                 <#cast_types>::#complex_conversion(rest.try_into().unwrap()),
                             ]
+                        }),
+                    )* */
+                   /* */ #(
+                        #complex_data_type_names::#complex_variants => #complex_data_kind_names::#complex_variants ({
+                            let mut tmp_vec = std::vec::Vec::new();
+                            for _ in 0..#number_of_array_elements {
+                                let (bytes, rest) = input.split_at(
+                                    std::mem::size_of::<#cast_types>()
+                                );
+                                let converted = <#cast_types>::from_le_bytes(bytes.try_into().unwrap());
+                                *input = rest;
+                                tmp_vec.push(converted);  
+                            }
+                            let out: [#cast_types;#number_of_array_elements]  = tmp_vec.into_iter().collect::<Vec<#cast_types>>().try_into().unwrap();
+                            out
                         }),
                     )*
                 }

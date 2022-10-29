@@ -2,7 +2,7 @@
 Crate for testing the type_cast_derive proc_macro
 
 ## Under heavy development!
-The proc_macro2::Literal "2" from  #[cast([f32;2] => from_le_bytes)] doesn't currently do anything in the macro other than be copied into the DataTypesCast{IEEE754LSBSingleArr([f32;2])}. Not sure how to automatically utilize that to expand arbitrarily. No number of repetitions functionality as far as I know.
+TODO: make the filter for primitives and arrays more robust and flexible than looking for "Arr" at the end. Should work no matter what the given enum variant names are.
 
 ```Rust
 #[derive(DataCast)]
@@ -31,7 +31,6 @@ pub enum DataTypes {
 ## Expands to:
 
 ```rust
-
 #[derive(Clone, Copy, Debug)]
 enum DataTypesCast {
     IEEE754LSBSingle(f32),
