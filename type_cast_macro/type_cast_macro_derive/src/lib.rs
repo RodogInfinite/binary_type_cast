@@ -110,13 +110,14 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
     let mut conversion = std::vec::Vec::new();
     let mut complex_conversion = std::vec::Vec::new();
     let mut number_of_array_elements = std::vec::Vec::new();
+    let mut complex_variants: Vec<proc_macro2::Ident> = std::vec::Vec::new();
+    let mut variants: Vec<proc_macro2::Ident> = std::vec::Vec::new();
     let data_type_names = repeat(name.clone());
     let complex_data_type_names = repeat(name.clone());
     let data_kind_name = format_ident!("{}Cast",name.clone());
     let data_kind_names = repeat(data_kind_name.clone());
     let complex_data_kind_names = repeat(data_kind_name.clone());
-    let mut complex_variants: Vec<proc_macro2::Ident> = std::vec::Vec::new();
-    let mut variants: Vec<proc_macro2::Ident> = std::vec::Vec::new();
+
     
     let _ = if let syn::Data::Enum(
         data_enum

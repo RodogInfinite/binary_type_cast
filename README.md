@@ -2,7 +2,9 @@
 Crate for testing the type_cast_derive proc_macro
 
 ## Under heavy development!
-TODO: make the filter for primitives and arrays more robust and flexible than looking for "Arr" at the end. Should work no matter what the given enum variant names are.
+TODO: 
+- Create Tests
+- Better Error Handling
 
 ```Rust
 #[derive(DataCast)]
@@ -58,38 +60,70 @@ impl DataTypes {
             }
             DataTypes::IEEE754LSBSingleArr => {
                 DataTypesCast::IEEE754LSBSingleArr({
-                    let (bytes, rest) = input.split_at(std::mem::size_of::<f32>());
-                    [
-                        <f32>::from_le_bytes(bytes.try_into().unwrap()),
-                        <f32>::from_le_bytes(rest.try_into().unwrap()),
-                    ]
+                    let mut tmp_vec = std::vec::Vec::new();
+                    for _ in 0..2 {
+                        let (bytes, rest) = input.split_at(std::mem::size_of::<f32>());
+                        let converted = <f32>::from_le_bytes(bytes.try_into().unwrap());
+                        *input = rest;
+                        tmp_vec.push(converted);
+                    }
+                    let out: [f32; 2] = tmp_vec
+                        .into_iter()
+                        .collect::<Vec<f32>>()
+                        .try_into()
+                        .unwrap();
+                    out
                 })
             }
             DataTypes::IEEE754LSBDoubleArr => {
                 DataTypesCast::IEEE754LSBDoubleArr({
-                    let (bytes, rest) = input.split_at(std::mem::size_of::<f64>());
-                    [
-                        <f64>::from_le_bytes(bytes.try_into().unwrap()),
-                        <f64>::from_le_bytes(rest.try_into().unwrap()),
-                    ]
+                    let mut tmp_vec = std::vec::Vec::new();
+                    for _ in 0..2 {
+                        let (bytes, rest) = input.split_at(std::mem::size_of::<f64>());
+                        let converted = <f64>::from_le_bytes(bytes.try_into().unwrap());
+                        *input = rest;
+                        tmp_vec.push(converted);
+                    }
+                    let out: [f64; 2] = tmp_vec
+                        .into_iter()
+                        .collect::<Vec<f64>>()
+                        .try_into()
+                        .unwrap();
+                    out
                 })
             }
             DataTypes::IEEE754MSBSingleArr => {
                 DataTypesCast::IEEE754MSBSingleArr({
-                    let (bytes, rest) = input.split_at(std::mem::size_of::<f32>());
-                    [
-                        <f32>::from_be_bytes(bytes.try_into().unwrap()),
-                        <f32>::from_be_bytes(rest.try_into().unwrap()),
-                    ]
+                    let mut tmp_vec = std::vec::Vec::new();
+                    for _ in 0..2 {
+                        let (bytes, rest) = input.split_at(std::mem::size_of::<f32>());
+                        let converted = <f32>::from_le_bytes(bytes.try_into().unwrap());
+                        *input = rest;
+                        tmp_vec.push(converted);
+                    }
+                    let out: [f32; 2] = tmp_vec
+                        .into_iter()
+                        .collect::<Vec<f32>>()
+                        .try_into()
+                        .unwrap();
+                    out
                 })
             }
             DataTypes::IEEE754MSBDoubleArr => {
                 DataTypesCast::IEEE754MSBDoubleArr({
-                    let (bytes, rest) = input.split_at(std::mem::size_of::<f64>());
-                    [
-                        <f64>::from_be_bytes(bytes.try_into().unwrap()),
-                        <f64>::from_be_bytes(rest.try_into().unwrap()),
-                    ]
+                    let mut tmp_vec = std::vec::Vec::new();
+                    for _ in 0..2 {
+                        let (bytes, rest) = input.split_at(std::mem::size_of::<f64>());
+                        let converted = <f64>::from_le_bytes(bytes.try_into().unwrap());
+                        *input = rest;
+                        tmp_vec.push(converted);
+                    }
+                    let out: [f64; 2] = tmp_vec
+                        .into_iter()
+                        .collect::<Vec<f64>>()
+                        .try_into()
+                        .unwrap();
+                    out
                 })
             }
         }
