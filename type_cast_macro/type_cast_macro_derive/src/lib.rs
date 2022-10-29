@@ -13,14 +13,6 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
     let ast:syn::DeriveInput = syn::parse(input).unwrap();
 
     let name = ast.ident;
-
-    let variants = match ast.data.clone() {
-        syn::Data::Enum(data_enum) => {
-            data_enum.variants.into_iter().map(|v| v.ident)
-        }
-        _ => panic!("DataCast only works on enums"),
-    };
-
     
     // Walk the Enum and get the attribute types
     fn get_cast_types(
@@ -129,7 +121,7 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
     let _ = if let syn::Data::Enum(
         data_enum
     ) = ast.data
-    {   //let variants = data_enum.variants.into_iter().map(|v| v.ident)
+    {
         get_cast_types(data_enum, &mut cast_types, &mut complex_cast_types, &mut conversion, &mut complex_conversion, &mut number_of_array_elements,&mut variants,&mut complex_variants);
     } else {
         unimplemented!();
