@@ -1,30 +1,30 @@
-use type_cast_macro_derive::DataCast;
+use type_cast_macro_derive::TypeCast;
 
-#[derive(Clone, Copy, Debug, DataCast)]
+#[derive(Clone, Copy, Debug, TypeCast)]
 pub enum DataTypes {
     // 4 bytes
-    #[cast(f32 => from_le_bytes)]
+    #[cast(from_le_bytes => f32)]
     IEEE754LSBSingle,
     // 8 bytes
-    #[cast(f64 => from_le_bytes)]
+    #[cast(from_le_bytes => f64)]
     IEEE754LSBDouble,
     // [4 bytes, 4 bytes]
-    #[cast([f32;2] => from_le_bytes)]
+    #[cast(from_le_bytes => [f32;2])]
     IEEE754LSBSingleArr,
     // [8 bytes, 8 bytes]
-    #[cast([f64;2] => from_le_bytes)]
+    #[cast(from_le_bytes => [f64;2])]
     IEEE754LSBDoubleArr,
     // [4 bytes, 4 bytes]
-    #[cast([f32;2] => from_be_bytes)]
+    #[cast(from_be_bytes => [f32;2])]
     IEEE754MSBSingleArr,
     // [8 bytes, 8 bytes]
-    #[cast([f64;2] => from_be_bytes)]
+    #[cast(from_be_bytes => [f64;2])]
     IEEE754MSBDoubleArr,
     // [4 bytes, 4 bytes]
-    #[cast([f32;3] => from_le_bytes)]
+    #[cast(from_le_bytes => [f32;3])]
     IEEE754LSBSingle2Arr,
     // [8 bytes, 8 bytes]
-    #[cast([f64;3] => from_le_bytes)]
+    #[cast(from_le_bytes => [f64;3])]
     IEEE754LSBDouble2Arr,
 }
 

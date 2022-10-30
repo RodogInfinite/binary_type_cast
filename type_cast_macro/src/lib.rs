@@ -1,3 +1,3 @@
-pub trait DataCast {
+pub trait TypeCast {
     fn parse();
 }

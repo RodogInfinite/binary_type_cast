@@ -7,11 +7,10 @@ use quote::{quote, format_ident};
 use syn;
 use std::iter::repeat;
 
-#[proc_macro_derive(DataCast,attributes(cast))]
+#[proc_macro_derive(TypeCast,attributes(cast))]
 pub fn derive_macro(input: TokenStream) -> TokenStream {
 
     let ast:syn::DeriveInput = syn::parse(input).unwrap();
-
     let name = ast.ident;
     
     // Walk the Enum and get the attribute types
