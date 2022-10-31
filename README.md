@@ -34,13 +34,33 @@ pub enum DataTypes {
 
 ```rust
 #[derive(Clone, Copy, Debug)]
-enum DataTypesCast {
-    IEEE754LSBSingle(f32),
-    IEEE754LSBDouble(f64),
-    IEEE754LSBSingleArr([f32; 2]),
-    IEEE754LSBDoubleArr([f64; 2]),
-    IEEE754MSBSingleArr([f32; 2]),
-    IEEE754MSBDoubleArr([f64; 2]),
+pub enum DataTypes {
+    // 4 bytes
+    #[cast(from_le_bytes => f32)]
+    IEEE754LSBSingle,
+    // 8 bytes
+    #[cast(from_le_bytes => f64)]
+    IEEE754LSBDouble,
+    // [4 bytes, 4 bytes]
+    #[cast(from_le_bytes => [f32;2])]
+    IEEE754LSBSingleArr,
+    // [8 bytes, 8 bytes]
+    #[cast(from_le_bytes => [f64;2])]
+    IEEE754LSBDoubleArr,
+    // [4 bytes, 4 bytes]
+    #[cast(from_be_bytes => [f32;2])]
+    IEEE754MSBSingleArr,
+    // [8 bytes, 8 bytes]
+    #[cast(from_be_bytes => [f64;2])]
+    IEEE754MSBDoubleArr,
+    // [4 bytes, 4 bytes]
+    #[cast(from_le_bytes => [f32;3])]
+    IEEE754LSBSingleArr3Elem,
+    // [8 bytes, 8 bytes]
+    #[cast(from_le_bytes => [f64;3])]
+    IEEE754LSBDoubleArr3Elem,
+    #[cast(String)]
+    ASCIIString,
 }
 
 impl DataTypes {
@@ -126,6 +146,43 @@ impl DataTypes {
                     out
                 })
             }
+            DataTypes::IEEE754LSBSingleArr3Elem => {
+                DataTypesCast::IEEE754LSBSingleArr3Elem({
+                    let mut tmp_vec = std::vec::Vec::new();
+                    for _ in 0..3 {
+                        let (bytes, rest) = input.split_at(std::mem::size_of::<f32>());
+                        let converted = <f32>::from_le_bytes(bytes.try_into().unwrap());
+                        *input = rest;
+                        tmp_vec.push(converted);
+                    }
+                    let out: [f32; 3] = tmp_vec
+                        .into_iter()
+                        .collect::<Vec<f32>>()
+                        .try_into()
+                        .unwrap();
+                    out
+                })
+            }
+            DataTypes::IEEE754LSBDoubleArr3Elem => {
+                DataTypesCast::IEEE754LSBDoubleArr3Elem({
+                    let mut tmp_vec = std::vec::Vec::new();
+                    for _ in 0..3 {
+                        let (bytes, rest) = input.split_at(std::mem::size_of::<f64>());
+                        let converted = <f64>::from_le_bytes(bytes.try_into().unwrap());
+                        *input = rest;
+                        tmp_vec.push(converted);
+                    }
+                    let out: [f64; 3] = tmp_vec
+                        .into_iter()
+                        .collect::<Vec<f64>>()
+                        .try_into()
+                        .unwrap();
+                    out
+                })
+            }
+            DataTypes::ASCIIString => {
+                DataTypesCast::ASCIIString(String::from_utf8(input.to_vec()).unwrap())
+            }
         }
     }
 }
@@ -141,14 +198,27 @@ fn main() {
     let mut data3: &[u8] = &[
         172, 152, 111, 195, 117, 93, 133, 192, 172, 152, 111, 195, 117, 93, 133, 192,
     ];
+    let mut data4: &[u8] = &[172, 152, 111, 195, 117, 93, 133, 192];
+    let mut data5: &[u8] = &[
+        172, 152, 111, 195, 117, 93, 133, 192, 172, 152, 111, 195, 117, 93, 133, 192,
+    ];
+    let mut data6: &[u8] = &[172, 152, 111, 195, 117, 93, 133, 192, 172, 152, 111, 195];
+    let mut data7: &[u8] = &[
+        172, 152, 111, 195, 117, 93, 133, 192, 172, 152, 111, 195, 117, 93, 133, 192, 172, 152,
+        111, 195, 172, 152, 111, 195,
+    ];
     println!(
-        "{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n",
+        "{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n",
         DataTypes::IEEE754LSBSingle.parse(&mut data),
         DataTypes::IEEE754LSBDouble.parse(&mut data2),
         DataTypes::IEEE754LSBSingleArr.parse(&mut data2),
         DataTypes::IEEE754LSBDoubleArr.parse(&mut data3),
-        DataTypes::IEEE754MSBSingleArr.parse(&mut data2),
-        DataTypes::IEEE754MSBDoubleArr.parse(&mut data3),
+        DataTypes::IEEE754MSBSingleArr.parse(&mut data4),
+        DataTypes::IEEE754MSBDoubleArr.parse(&mut data5),
+        DataTypes::IEEE754LSBSingleArr3Elem.parse(&mut data6),
+        DataTypes::IEEE754LSBDoubleArr3Elem.parse(&mut data7),
+        DataTypes::ASCIIString.parse(&mut "Hello".as_bytes()),
+        DataTypes::ASCIIString.parse(&mut "GoodBye".as_bytes()),
     )
 }
 ```
@@ -159,6 +229,10 @@ IEEE754LSBSingle(-239.59637)
 IEEE754LSBDouble(-683.6825016706912)
 IEEE754LSBSingleArr([-239.59637, -4.1676583])
 IEEE754LSBDoubleArr([-683.6825016706912, -683.6825016706912])
-IEEE754MSBSingleArr([-4.332508e-12, 2.8081308e32])
-IEEE754MSBDoubleArr([-7.321865025863303e-94, -7.321865025863303e-94])
+IEEE754MSBSingleArr([-239.59637, -4.1676583])
+IEEE754MSBDoubleArr([-683.6825016706912, -683.6825016706912])
+IEEE754LSBSingleArr3Elem([-239.59637, -4.1676583, -239.59637])
+IEEE754LSBDoubleArr3Elem([-683.6825016706912, -683.6825016706912, -7.11487364695832e16])
+ASCIIString("Hello")
+ASCIIString("GoodBye")
 ```
