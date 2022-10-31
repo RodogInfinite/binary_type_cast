@@ -1,74 +1,69 @@
 #![feature(assert_matches)]
 extern crate proc_macro;
 
-use std::{assert_matches::assert_matches};
 use proc_macro::TokenStream;
-use quote::{quote, format_ident};
+use quote::{format_ident, quote};
+use std::{assert_matches::assert_matches,iter::repeat,string::String};
+
 use syn;
-use std::iter::repeat;
 
-#[proc_macro_derive(TypeCast,attributes(cast))]
+#[proc_macro_derive(TypeCast, attributes(cast))]
 pub fn derive_macro(input: TokenStream) -> TokenStream {
-
-    let ast:syn::DeriveInput = syn::parse(input).unwrap();
+    let ast: syn::DeriveInput = syn::parse(input).unwrap();
     let name = ast.ident;
-    
+
     // Walk the Enum and get the attribute types
     fn get_cast_types(
-        data_enum: syn::DataEnum, 
-        cast_types: &mut Vec<proc_macro2::Ident>, 
+        data_enum: syn::DataEnum,
+        cast_types: &mut Vec<proc_macro2::Ident>,
         complex_cast_types: &mut Vec<proc_macro2::Group>,
         conversion: &mut Vec<proc_macro2::Ident>,
         complex_conversion: &mut Vec<proc_macro2::Ident>,
         number_of_array_elements: &mut Vec<proc_macro2::Literal>,
         variants: &mut Vec<proc_macro2::Ident>,
         complex_variants: &mut Vec<proc_macro2::Ident>,
-        
-    )
-        {
-            // `group_bool` is needed for tracking the array types' inner group defined in the casts. 
-            let mut group_bool = false;
-            data_enum.clone().variants.into_iter().map(|variant| variant)
-                .for_each(|variant| variant.attrs.into_iter().map(|attr|attr)
+        string_types: &mut Vec<proc_macro2::Ident>,
+        string_variants: &mut Vec<proc_macro2::Ident>,
+    ) {
+        // `group_bool` is needed for tracking the array types' inner group defined in the casts.
+        let mut group_bool = false;
+        data_enum.clone().variants.into_iter().map(|variant| variant)
+                .for_each(|variant| variant.attrs.into_iter().filter(|attr|attr.path.is_ident("cast")).map(|attr|attr)
                     .for_each(|attr| attr.tokens.into_iter().map(|token|token)
                         .for_each(|token|{
                             if let proc_macro2::TokenTree::Group(group) = token {
                                 // For complex types i.e [f32;2], there's an inner group that matches first and provides the type, 
                                 // then the next loop through the outer group (here) provides the idents for the conversion. 
                                 // group_bool tracks this so that the cast conversions remain correct
-                                group_bool = false; 
+                                group_bool = false;
                                 group.stream().into_iter().map(|stream| stream)
                                     .for_each(|stream|
                                         match stream {
                                             proc_macro2::TokenTree::Ident(ref ident) => {
                                                 match ident.clone().to_string().as_str() {
-                                                    "f32"=> {
-                                                        cast_types.push(ident.clone());
-                                                        variants.push(variant.ident.clone());
-                                                    },
-                                                    "f64" => {
-                                                        cast_types.push(ident.clone());
-                                                        variants.push(variant.ident.clone());
-                                                    },
-                                                    // From little endian bytes
-                                                    "from_le_bytes" => {
+                                                    // From little endian bytes | From big endian bytes
+                                                    "from_le_bytes" | "from_be_bytes" => {
                                                         if group_bool == true {
                                                             complex_conversion.push(ident.clone());
                                                         } else {conversion.push(ident.clone())}
                                                     },
-                                                    // From big endian bytes
-                                                    "from_be_bytes" => {
-                                                        if group_bool == true {
-                                                            complex_conversion.push(ident.clone());
-                                                        } else {conversion.push(ident.clone())}
+                                                    "f32"|"f64"|"i16"|"i32"|"i64"=> {
+                                                        cast_types.push(ident.clone());
+                                                        variants.push(variant.ident.clone());
                                                     },
+                                                    "String" => {
+                                                        string_types.push(ident.clone());
+                                                        string_variants.push(variant.ident.clone());
+                                                    }
+                                                    
+
                                                     i => panic!("Expected valid conversion or valid cast type, found {}",i),
                                                 }
                                             },
                                             proc_macro2::TokenTree::Punct(ref punct) => {
+                                                // Can add verification here that they're in the order `=>`. Push them to a vec and then when it has two items, assert_match it with vec!['=','>']
                                                 assert_matches!(punct.as_char(), '='| '>');
                                             },
-                                            
                                             proc_macro2::TokenTree::Group(array_group) => {
                                                 complex_cast_types.push(array_group.clone());
                                                 eprintln!("ARRAYGROUP{:#?}",array_group);
@@ -101,9 +96,8 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                         )
                     )
                 )
-        } 
+    }
 
-            
     let mut cast_types = std::vec::Vec::new();
     let mut complex_cast_types = std::vec::Vec::new();
     let mut conversion = std::vec::Vec::new();
@@ -113,26 +107,39 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
     let mut variants: Vec<proc_macro2::Ident> = std::vec::Vec::new();
     let data_type_names = repeat(name.clone());
     let complex_data_type_names = repeat(name.clone());
-    let data_kind_name = format_ident!("{}Cast",name.clone());
+    let data_kind_name = format_ident!("{}Cast", name.clone());
     let data_kind_names = repeat(data_kind_name.clone());
     let complex_data_kind_names = repeat(data_kind_name.clone());
-
-    
-    let _ = if let syn::Data::Enum(
-        data_enum
-    ) = ast.data
-    {
-        get_cast_types(data_enum, &mut cast_types, &mut complex_cast_types, &mut conversion, &mut complex_conversion, &mut number_of_array_elements,&mut variants,&mut complex_variants);
+    let string_data_kind_names = name.clone();
+    let mut string_types: Vec<proc_macro2::Ident> =std::vec::Vec::new(); 
+    let mut string_variants: Vec<proc_macro2::Ident> = std::vec::Vec::new();
+    let _ = if let syn::Data::Enum(data_enum) = ast.data {
+        get_cast_types(
+            data_enum,
+            &mut cast_types,
+            &mut complex_cast_types,
+            &mut conversion,
+            &mut complex_conversion,
+            &mut number_of_array_elements,
+            &mut variants,
+            &mut complex_variants,
+            &mut string_types,
+            &mut string_variants,
+        );
     } else {
         unimplemented!();
     };
-   
+
     let gen = quote! {
+
+
         #[derive(Debug)]
         enum #data_kind_name {
             #(#variants(#cast_types),)*
             #(#complex_variants(#complex_cast_types),)*
+            #(#string_variants(#string_types),)*
         }
+
 
         impl #name  {
             fn parse(self, input: &mut &[u8]) -> #data_kind_name {
@@ -157,15 +164,20 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                                 let converted = <#cast_types>::from_le_bytes(bytes.try_into().unwrap());
                                 // This allows the input to become the remaining bytes for the next iteration
                                 *input = rest;
-                                tmp_vec.push(converted);  
+                                tmp_vec.push(converted);
                             }
                             // Transform the vec into the output array
                             let out: [#cast_types;#number_of_array_elements]  = tmp_vec.into_iter().collect::<Vec<#cast_types>>().try_into().unwrap();
                             out
                         }),
                     )*
+                    #(
+                        #string_data_kind_names::#string_variants => #data_kind_name::#string_variants(String::from_utf8(input.to_vec()).unwrap())
+                    )*
+                    
                 }
-            } 
+                
+            }
         } 
     };
     gen.into()

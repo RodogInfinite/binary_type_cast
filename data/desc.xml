@@ -1,0 +1,30 @@
+<Records>
+    <RecordDesc>
+        <name>Single</name>
+        <number>1</number>
+        <location unit="byte">0</location>
+        <data_type>IEEE754LSBSingle</data_type>
+        <length> unit="byte">4</length>
+    </RecordDesc>
+    <RecordDesc>
+        <name>Double</name>
+        <number>1</number>
+        <location unit="byte">5</location>
+        <data_type>IEEE754LSBDouble</data_type>
+        <length> unit="byte">8</length>
+    </RecordDesc>
+    <RecordDesc>
+        <name>SingleArr</name>
+        <number>1</number>
+        <location unit="byte">13</location>
+        <data_type>IEEE754LSBSingleArr</data_type>
+        <length> unit="byte">8</length>
+    </RecordDesc>
+    <RecordDesc>
+        <name>DoubleArr</name>
+        <number>1</number>
+        <location unit="byte">29</location>
+        <data_type>IEEE754LSBDoubleArr</data_type>
+        <length> unit="byte">16</length>
+    </RecordDesc>
+</Records>

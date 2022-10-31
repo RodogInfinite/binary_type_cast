@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use type_cast_macro_derive::TypeCast;
 
 #[derive(Clone, Copy, Debug, TypeCast)]
@@ -22,11 +23,18 @@ pub enum DataTypes {
     IEEE754MSBDoubleArr,
     // [4 bytes, 4 bytes]
     #[cast(from_le_bytes => [f32;3])]
-    IEEE754LSBSingle2Arr,
+    IEEE754LSBSingleArr3Elem,
     // [8 bytes, 8 bytes]
     #[cast(from_le_bytes => [f64;3])]
-    IEEE754LSBDouble2Arr,
+    IEEE754LSBDoubleArr3Elem,
+    #[cast(String)]
+    ASCIIString,
 }
+
+//#[derive(Deserialize)]
+//struct Record {
+//    data_types: DataTypes,
+//}
 
 fn main() {
     let mut data: &[u8] = &[172, 152, 111, 195];
@@ -44,16 +52,16 @@ fn main() {
         111, 195, 172, 152, 111, 195,
     ];
     println!(
-        "{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n",
+        "{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n",
         DataTypes::IEEE754LSBSingle.parse(&mut data),
         DataTypes::IEEE754LSBDouble.parse(&mut data2),
         DataTypes::IEEE754LSBSingleArr.parse(&mut data2),
         DataTypes::IEEE754LSBDoubleArr.parse(&mut data3),
         DataTypes::IEEE754MSBSingleArr.parse(&mut data4),
         DataTypes::IEEE754MSBDoubleArr.parse(&mut data5),
-        DataTypes::IEEE754LSBSingle2Arr.parse(&mut data6),
-        DataTypes::IEEE754LSBDouble2Arr.parse(&mut data7),
-        //DataTypes::IEEE754MSBSingleArr.parse(&mut data4),
-        //DataTypes::IEEE754MSBDoubleArr.parse(&mut data5),
+        DataTypes::IEEE754LSBSingleArr3Elem.parse(&mut data6),
+        DataTypes::IEEE754LSBDoubleArr3Elem.parse(&mut data7),
+        DataTypes::ASCIIString.parse(&mut "Hello".as_bytes()),
+        DataTypes::ASCIIString.parse(&mut "GoodBye".as_bytes()),
     )
 }
