@@ -27,32 +27,6 @@ pub enum DataTypes {
     // [8 bytes, 8 bytes]
     #[cast(from_be_bytes => [f64;2])]
     IEEE754MSBDoubleArr,
-}
-```
-
-## Expands to:
-
-```rust
-#[derive(Clone, Copy, Debug)]
-pub enum DataTypes {
-    // 4 bytes
-    #[cast(from_le_bytes => f32)]
-    IEEE754LSBSingle,
-    // 8 bytes
-    #[cast(from_le_bytes => f64)]
-    IEEE754LSBDouble,
-    // [4 bytes, 4 bytes]
-    #[cast(from_le_bytes => [f32;2])]
-    IEEE754LSBSingleArr,
-    // [8 bytes, 8 bytes]
-    #[cast(from_le_bytes => [f64;2])]
-    IEEE754LSBDoubleArr,
-    // [4 bytes, 4 bytes]
-    #[cast(from_be_bytes => [f32;2])]
-    IEEE754MSBSingleArr,
-    // [8 bytes, 8 bytes]
-    #[cast(from_be_bytes => [f64;2])]
-    IEEE754MSBDoubleArr,
     // [4 bytes, 4 bytes]
     #[cast(from_le_bytes => [f32;3])]
     IEEE754LSBSingleArr3Elem,
@@ -61,6 +35,23 @@ pub enum DataTypes {
     IEEE754LSBDoubleArr3Elem,
     #[cast(String)]
     ASCIIString,
+}
+```
+
+## Expands to:
+
+```rust
+#[derive(Clone, Copy, Debug)]
+enum DataTypesCast {
+    IEEE754LSBSingle(f32),
+    IEEE754LSBDouble(f64),
+    IEEE754LSBSingleArr([f32; 2]),
+    IEEE754LSBDoubleArr([f64; 2]),
+    IEEE754MSBSingleArr([f32; 2]),
+    IEEE754MSBDoubleArr([f64; 2]),
+    IEEE754LSBSingleArr3Elem([f32; 3]),
+    IEEE754LSBDoubleArr3Elem([f64; 3]),
+    ASCIIString(String),
 }
 
 impl DataTypes {
