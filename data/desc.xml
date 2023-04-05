@@ -2,29 +2,64 @@
     <RecordDesc>
         <name>Single</name>
         <number>1</number>
-        <location unit="byte">0</location>
+        <location>0</location>
         <data_type>IEEE754LSBSingle</data_type>
-        <length> unit="byte">4</length>
+        <length>4</length>
     </RecordDesc>
     <RecordDesc>
         <name>Double</name>
-        <number>1</number>
-        <location unit="byte">5</location>
+        <number>2</number>
+        <location>4</location>
         <data_type>IEEE754LSBDouble</data_type>
-        <length> unit="byte">8</length>
+        <length>8</length>
     </RecordDesc>
     <RecordDesc>
         <name>SingleArr</name>
-        <number>1</number>
-        <location unit="byte">13</location>
-        <data_type>IEEE754LSBSingleArr</data_type>
-        <length> unit="byte">8</length>
+        <number>3</number>
+        <location>12</location>
+        <data_type>IEEE754LSBSingleArr2</data_type>
+        <length>8</length>
     </RecordDesc>
     <RecordDesc>
         <name>DoubleArr</name>
-        <number>1</number>
-        <location unit="byte">29</location>
-        <data_type>IEEE754LSBDoubleArr</data_type>
-        <length> unit="byte">16</length>
+        <number>4</number>
+        <location>20</location>
+        <data_type>IEEE754LSBDoubleArr2</data_type>
+        <length>16</length>
+    </RecordDesc>
+    <RecordDesc>
+        <name>MSBSingleArr</name>
+        <number>5</number>
+        <location>36</location>
+        <data_type>IEEE754MSBSingleArr2</data_type>
+        <length>8</length>
+    </RecordDesc>
+    <RecordDesc>
+        <name>MSBDoubleArr</name>
+        <number>6</number>
+        <location>44</location>
+        <data_type>IEEE754MSBDoubleArr2</data_type>
+        <length>16</length>
+    </RecordDesc>
+    <RecordDesc>
+        <name>LSBSingleArr3</name>
+        <number>7</number>
+        <location>60</location>
+        <data_type>IEEE754LSBSingleArr3</data_type>
+        <length>12</length>
+    </RecordDesc>
+    <RecordDesc>
+        <name>LSBDoubleArr3</name>
+        <number>8</number>
+        <location>72</location>
+        <data_type>IEEE754LSBDoubleArr3</data_type>
+        <length>24</length>
+    </RecordDesc>
+    <RecordDesc>
+        <name>ASCIIString</name>
+        <number>9</number>
+        <location>96</location>
+        <data_type>ASCIIString</data_type>
+        <length>10</length>
     </RecordDesc>
 </Records>
