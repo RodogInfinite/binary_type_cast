@@ -5,6 +5,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 keywords = ["cast", "type", "binary", "endian", "bytes"]
 categories = ["parsing","data-structures","encoding"]
+description = "A Rust crate for simplifying the process of parsing binary file data into various Rust data types using the TypeCast macro."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
