@@ -1,7 +1,8 @@
 pub mod generate_mock_data;
+use binary_type_cast::TypeCast;
 use nom::{bytes::complete::take, IResult};
 use serde::{Deserialize, Serialize};
-use type_cast_macro_derive::TypeCast;
+
 
 // DataTypesCast is generated at compile time here
 // The names of the variants should match the data_types textually described. In the example, its the `data_type` field in the xml which is then deserialized into the RecordDesc struct.
