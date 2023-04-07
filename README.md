@@ -1,5 +1,5 @@
 # binary_type_cast
-A Rust crate for simplifying the process of parsing binary data into various data types using the TypeCast macro.
+A Rust crate for simplifying the process of parsing binary file data into various Rust data types using the TypeCast macro.
 
 ## Under heavy development!
 TODO: 
