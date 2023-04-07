@@ -1,7 +1,7 @@
-pub mod try_into;
 pub mod cast_extraction;
+pub mod try_into;
 // Define a struct to hold the vectors
-#[derive(Clone,Default)]
+#[derive(Clone, Default)]
 pub struct CastTypeData {
     pub cast_types: Vec<proc_macro2::Ident>,
     pub complex_cast_types: Vec<proc_macro2::Ident>,

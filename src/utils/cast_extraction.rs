@@ -3,8 +3,8 @@ use proc_macro2::TokenTree;
 
 /// Represents the processing states for cast type attributes.
 enum ProcessingState {
-    Simple,   // The cast type is a primitive data type.
-    Complex,  // The cast type is a complex data type (e.g., an array).
+    Simple,  // The cast type is a primitive data type.
+    Complex, // The cast type is a complex data type (e.g., an array).
 }
 
 /// Parses the custom `cast` attribute for each variant of the given data enum
@@ -23,9 +23,12 @@ enum ProcessingState {
 /// # Returns
 ///
 /// A vector of `proc_macro2::TokenTree` containing any errors encountered during parsing.
-pub fn get_cast_types(data_enum: syn::DataEnum, cast_type_data: &mut CastTypeData) -> Vec<proc_macro2::TokenTree> {
+pub fn get_cast_types(
+    data_enum: syn::DataEnum,
+    cast_type_data: &mut CastTypeData,
+) -> Vec<proc_macro2::TokenTree> {
     let mut errors = Vec::new();
-    
+
     // Iterate over each variant in the enum
     data_enum.variants.into_iter().for_each(|variant| {
         // Iterate over the attributes of the variant, filtering only the ones with the "cast" identifier
@@ -90,19 +93,17 @@ pub fn get_cast_types(data_enum: syn::DataEnum, cast_type_data: &mut CastTypeDat
                         // Handle unexpected tokens in the attribute group
                         tt => errors.extend(syn::Error::new(stream.span(), tt.to_string()).to_compile_error()),
                     }
+                });
+                let valid_arrows = punctuations.windows(2).all(|window| window[0] == '=' && window[1] == '>');
+                if !valid_arrows {
+                    errors.extend(syn::Error::new(group.span(), "Expected '=>', found different order or extra characters").to_compile_error());
+                } else {
+                    punctuations.clear();
                 }
-            );
-        let valid_arrows = punctuations.windows(2).all(|window| window[0] == '=' && window[1] == '>');
-    
-        if !valid_arrows {
-            errors.extend(syn::Error::new(group.span(), "Expected '=>', found different order or extra characters").to_compile_error());
-        } else {
-            punctuations.clear();
-        }
-                }
-            });
+            }
         });
-    
+    });
+
     // Return the errors encountered during processing
     errors
 }

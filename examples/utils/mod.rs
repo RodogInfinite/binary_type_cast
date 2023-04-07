@@ -3,7 +3,6 @@ use binary_type_cast::TypeCast;
 use nom::{bytes::complete::take, IResult};
 use serde::{Deserialize, Serialize};
 
-
 // DataTypesCast is generated at compile time here
 // The names of the variants should match the data_types textually described. In the example, its the `data_type` field in the xml which is then deserialized into the RecordDesc struct.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, TypeCast)]
