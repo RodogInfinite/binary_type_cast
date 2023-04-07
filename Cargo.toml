@@ -9,4 +9,8 @@ edition = "2021"
 nom = "7.1.1"
 serde = {version = "1.0.147", features = ["derive"]}
 serde-xml-rs = "0.6.0"
-type_cast_macro_derive = {version = "0.1.0", path = "./type_cast_macro_derive"}
+
+[dependencies.type_cast_macro_derive]
+path = "./type_cast_macro_derive"
+package = "type_cast_macro_derive"
+version = "0.1.0"
