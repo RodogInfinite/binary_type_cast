@@ -135,6 +135,19 @@ impl DataTypes {
         }
     }
 }
+
+// Generated at compile time for FromStr trait:
+impl std::str::FromStr for DataTypes {
+    type Err = Box<dyn std::error::Error + Send + Sync>;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "AnyCustomVariant" => Ok(DataTypes::AnyCustomVariant),
+            "AnyCustomVariant2" => Ok(DataTypes::AnyCustomVariant2),
+            _ => Err("Invalid variant".into()),
+        }
+    }
+}
 ```
 If the parent enum has a large number of variants, this would be extremely tedious to type out. 
 
