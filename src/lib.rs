@@ -3,6 +3,7 @@ mod utils;
 
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
+use utils::from_str::generated_from_str_impl;
 
 use std::iter::repeat;
 use syn;
@@ -446,40 +447,7 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
         }
     };
 
-    let generated_from_str_impl = {
-        let mut match_arms = quote! {};
-        for variant in variants {
-            match_arms = quote! {
-                #match_arms
-                stringify!(#variant) => Ok(#name::#variant),
-            };
-        }
-        for complex_variant in complex_variants {
-            match_arms = quote! {
-                #match_arms
-                stringify!(#complex_variant) => Ok(#name::#complex_variant),
-            };
-        }
-        for string_variant in string_variants {
-            match_arms = quote! {
-                #match_arms
-                stringify!(#string_variant) => Ok(#name::#string_variant),
-            };
-        }
-
-        quote! {
-            impl std::str::FromStr for #name {
-                type Err = Box<dyn std::error::Error + Send + Sync>;
-
-                fn from_str(s: &str) -> Result<Self, Self::Err> {
-                    match s {
-                        #match_arms
-                        _ => Err("Invalid variant".into())
-                    }
-                }
-            }
-        }
-    };
+    let generated_from_str_impl = generated_from_str_impl(name, cast_type_data);
 
     let combined_gen = quote! {
         #gen

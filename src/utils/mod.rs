@@ -1,5 +1,7 @@
 pub mod cast_extraction;
+pub mod from_str;
 pub mod try_into;
+
 // Define a struct to hold the vectors
 #[derive(Clone, Default)]
 pub struct CastTypeData {
