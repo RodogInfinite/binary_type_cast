@@ -446,9 +446,45 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
         }
     };
 
+    let generated_from_str_impl = {
+        let mut match_arms = quote! {};
+        for variant in variants {
+            match_arms = quote! {
+                #match_arms
+                stringify!(#variant) => Ok(#name::#variant),
+            };
+        }
+        for complex_variant in complex_variants {
+            match_arms = quote! {
+                #match_arms
+                stringify!(#complex_variant) => Ok(#name::#complex_variant),
+            };
+        }
+        for string_variant in string_variants {
+            match_arms = quote! {
+                #match_arms
+                stringify!(#string_variant) => Ok(#name::#string_variant),
+            };
+        }
+
+        quote! {
+            impl std::str::FromStr for #name {
+                type Err = Box<dyn std::error::Error + Send + Sync>;
+
+                fn from_str(s: &str) -> Result<Self, Self::Err> {
+                    match s {
+                        #match_arms
+                        _ => Err("Invalid variant".into())
+                    }
+                }
+            }
+        }
+    };
+
     let combined_gen = quote! {
         #gen
         #generated_try_into_impls
+        #generated_from_str_impl
     };
     combined_gen.into()
 }
