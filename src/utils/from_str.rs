@@ -105,7 +105,7 @@ pub fn generated_from_str_impl(name: &Ident, cast_type_data: &mut CastTypeData) 
 
     quote! {
         impl std::str::FromStr for #name {
-            type Err = Box<dyn std::error::Error + Send + Sync>;
+            type Err = Box<dyn std::error::Error>;
 
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 match s {
@@ -116,3 +116,4 @@ pub fn generated_from_str_impl(name: &Ident, cast_type_data: &mut CastTypeData) 
         }
     }
 }
+
