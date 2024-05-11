@@ -97,7 +97,7 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
                                 let (bytes, rest) = input.split_at(
                                     std::mem::size_of::<#complex_cast_types>()
                                 );
-                                let converted = <#complex_cast_types>::from_le_bytes(bytes.try_into().unwrap());
+                                let converted = <#complex_cast_types>::#conversion(bytes.try_into().unwrap());
                                 // This allows the input to become the remaining bytes for the next iteration
                                 *input = rest;
                                 tmp_vec.push(converted);
