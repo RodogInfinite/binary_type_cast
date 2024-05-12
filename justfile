@@ -4,4 +4,4 @@ expand:
 
 run example:
     clear
-    cargo +nightly run --example hashmapped_fields
+    cargo +nightly run --example btreemapped_fields
