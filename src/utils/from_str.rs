@@ -35,12 +35,12 @@ use super::CastTypeData;
 ///      ASCIIString,
 ///  }
 ///  ```
-/// 
+///
 /// ```rust
 /// // Generated at compile time for the FromStr trait:
 /// impl std::str::FromStr for DataTypes {
 ///     type Err = Box<dyn std::error::Error + Send + Sync>;
-/// 
+///
 ///     fn from_str(s: &str) -> Result<Self, Self::Err> {
 ///         match s {
 ///             "IEEE754LSBSingle" => Ok(DataTypes::IEEE754LSBSingle),
@@ -57,10 +57,10 @@ use super::CastTypeData;
 ///     }
 /// }
 /// ```
-/// 
+///
 /// ```rust
 /// // Usage
-/// 
+///
 /// pub fn usage_example() {
 ///     let data_type_str = "IEEE754LSBSingle";
 ///     let data_type = DataTypes::from_str(data_type_str).unwrap();
@@ -79,7 +79,7 @@ use super::CastTypeData;
 ///     let data_type = DataTypes::from_str(data_type_str);
 ///     assert!(data_type.is_err());
 /// }
-/// 
+///
 /// ```
 
 pub fn generated_from_str_impl(name: &Ident, cast_type_data: &mut CastTypeData) -> TokenStream2 {
@@ -116,4 +116,3 @@ pub fn generated_from_str_impl(name: &Ident, cast_type_data: &mut CastTypeData) 
         }
     }
 }
-

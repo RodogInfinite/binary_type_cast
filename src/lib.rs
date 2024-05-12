@@ -2,11 +2,12 @@ extern crate proc_macro;
 mod utils;
 
 use proc_macro::TokenStream;
+use proc_macro2::Span;
 use quote::{format_ident, quote};
 use utils::from_str::generated_from_str_impl;
 
 use std::iter::repeat;
-use syn;
+use syn::{self, Ident};
 
 use crate::utils::{
     cast_extraction::get_cast_types,
@@ -55,6 +56,7 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
         complex_cast_types,
         complex_cast_types_group,
         conversion,
+        complex_conversion,
         number_of_array_elements,
         variants,
         complex_variants,
@@ -62,6 +64,24 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
         string_variants,
         ..
     } = &cast_type_data;
+    let mut parser_types: Vec<Ident> = Vec::new();
+    for (cast_type, conversion) in cast_types.iter().zip(conversion) {
+        let cast_type = cast_type.to_string();
+        let conversion = conversion.to_string();
+        parser_types.push(Ident::new(
+            &format!("{conversion}{cast_type}"),
+            Span::call_site(),
+        ))
+    }
+    let mut complex_parser_types: Vec<Ident> = Vec::new();
+    for (cast_type, conversion) in complex_cast_types.iter().zip(complex_conversion) {
+        let cast_type = cast_type.to_string();
+        let conversion = conversion.to_string();
+        complex_parser_types.push(Ident::new(
+            &format!("{conversion}{cast_type}"),
+            Span::call_site(),
+        ))
+    }
 
     let gen = quote! {
 
@@ -76,46 +96,82 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
         // Implement the parse method for the enum decorated with #[derive(TypeCast)]
         impl #name  {
             // The parse method takes a mutable reference to a byte slice and returns an instance of DataKind
-            pub fn parse(self, input: &mut &[u8]) -> #data_kind_name {
+            // pub fn parse(self, input: &mut &[u8]) -> #data_kind_name {
+            //     // Match the current variant of the enum decorated with #[derive(TypeCast)] and convert the input bytes accordingly
+            //     match self {
+            //         #(
+            //             #data_type_names::#variants => #data_kind_names::#variants ({
+            //                 // `bytes` should be the size of the entire data read in; therefore, the `rest` from the `split_at` can be ignored
+            //                 let (bytes, _) = input.split_at(
+            //                     std::mem::size_of::<#cast_types>()
+            //                 );
+            //                 <#cast_types>::#conversion(bytes.try_into().unwrap())
+            //             }),
+            //         )*
+            //         // Handle complex types
+            //         #(
+            //             #complex_data_type_names::#complex_variants => #complex_data_kind_names::#complex_variants ({
+            //                 let mut tmp_vec = std::vec::Vec::new();
+            //                 // Convert the byte information into the defined rust type from the cast. Push them to the temporary vector in this loop. This allows for an output array to be created that has the size of the array with the expected types defined in the cast.
+            //                 for _ in 0..#number_of_array_elements {
+            //                     let (bytes, rest) = input.split_at(
+            //                         std::mem::size_of::<#complex_cast_types>()
+            //                     );
+            //                     let converted = <#complex_cast_types>::#conversion(bytes.try_into().unwrap());
+            //                     // This allows the input to become the input bytes for the next iteration
+            //                     *input = rest;
+            //                     tmp_vec.push(converted);
+            //                 }
+            //                 // Transform the vec into the output array
+            //                 let out: [#complex_cast_types;#number_of_array_elements]  = tmp_vec.into_iter().collect::<Vec<#complex_cast_types>>().try_into().unwrap();
+            //                 out
+            //             }),
+            //         )*
+            //         // Handle string types
+            //         #(
+            //             #string_data_kind_names::#string_variants => #data_kind_name::#string_variants(String::from_utf8(input.to_vec()).unwrap())
+            //         )*
+
+            //     }
+
+            // }
+
+            pub fn parse(self, input: &[u8]) -> IResult<&[u8], #data_kind_name> {
                 // Match the current variant of the enum decorated with #[derive(TypeCast)] and convert the input bytes accordingly
                 match self {
                     #(
-                        #data_type_names::#variants => #data_kind_names::#variants ({
-                            // `bytes` should be the size of the entire data read in; therefore, the `rest` from the `split_at` can be ignored
-                            let (bytes, _) = input.split_at(
-                                std::mem::size_of::<#cast_types>()
-                            );
-                            <#cast_types>::#conversion(bytes.try_into().unwrap())
-                        }),
+                        #data_type_names::#variants => {
+                            let (tail, bytes) = nom::number::complete::#parser_types(input)?;
+
+                        Ok((tail, #data_kind_names::#variants (
+
+                            bytes
+                        )))
+
+                    },
                     )*
-                    // Handle complex types
                     #(
-                        #complex_data_type_names::#complex_variants => #complex_data_kind_names::#complex_variants ({
-                            let mut tmp_vec = std::vec::Vec::new();
-                            // Convert the byte information into the defined rust type from the cast. Push them to the temporary vector in this loop. This allows for an output array to be created that has the size of the array with the expected types defined in the cast.
-                            for _ in 0..#number_of_array_elements {
-                                let (bytes, rest) = input.split_at(
-                                    std::mem::size_of::<#complex_cast_types>()
-                                );
-                                let converted = <#complex_cast_types>::#conversion(bytes.try_into().unwrap());
-                                // This allows the input to become the remaining bytes for the next iteration
-                                *input = rest;
-                                tmp_vec.push(converted);
-                            }
-                            // Transform the vec into the output array
-                            let out: [#complex_cast_types;#number_of_array_elements]  = tmp_vec.into_iter().collect::<Vec<#complex_cast_types>>().try_into().unwrap();
-                            out
-                        }),
+                        #complex_data_type_names::#complex_variants => {
+                            let (tail, elements_vec) = nom::multi::count(nom::number::complete::#complex_parser_types, #number_of_array_elements)(input)?;
+
+                            let out: [#complex_cast_types; #number_of_array_elements] = elements_vec.try_into().map_err(|_| nom::Err::Failure(nom::error::Error::new(input, nom::error::ErrorKind::Fail)))?;
+
+                            Ok((tail, #complex_data_kind_names::#complex_variants(out)))
+                        },
                     )*
                     // Handle string types
                     #(
-                        #string_data_kind_names::#string_variants => #data_kind_name::#string_variants(String::from_utf8(input.to_vec()).unwrap())
+                        #string_data_kind_names::#string_variants => {
+
+
+                        let (tail,bytes) = nom::bytes::complete::take_while1(|c:u8| c.is_ascii())(input)?;
+                        let string_result = String::from_utf8(bytes.to_vec()).map_err(|_| nom::Err::Failure(nom::error::Error::new(input, nom::error::ErrorKind::Fail)))?;
+
+                        Ok((tail,#data_kind_name::#string_variants(string_result)))
+                    }
                     )*
-
-                }
-
+                 }
             }
-
         }
     };
 

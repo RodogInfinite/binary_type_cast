@@ -21,7 +21,7 @@ pub fn build_type_variants_map(
         let cast_type_str = cast_type.to_string();
         type_variants_map
             .entry(cast_type_str)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(variant.clone());
     }
 
@@ -34,7 +34,7 @@ pub fn build_type_variants_map(
         let string_type_str = string_type.to_string();
         type_variants_map
             .entry(string_type_str)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(string_variant.clone());
     }
 
@@ -47,10 +47,10 @@ pub fn build_type_variants_map(
         let complex_cast_type_str = complex_cast_type.to_string();
         type_variants_map
             .entry(complex_cast_type_str)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(complex_variant.clone());
     }
-    return type_variants_map;
+    type_variants_map
 }
 
 pub fn generate_try_into_impls(
@@ -64,7 +64,7 @@ pub fn generate_try_into_impls(
         let cast_type: TokenStream2 = cast_type_str.parse().unwrap();
         // Generate match arms for each variant associated with the cast type
         let match_arms: TokenStream2 = variants
-            .into_iter()
+            .iter()
             .map(|variant| {
                 quote! {
                     #data_kind_name::#variant(val) => Ok(val),
@@ -91,5 +91,6 @@ pub fn generate_try_into_impls(
     let generated_impls = quote! {
         #(#try_into_impls)*
     };
-    generated_impls.into()
+
+    generated_impls
 }
