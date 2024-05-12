@@ -49,163 +49,97 @@
 
 
  impl DataTypes {
-        pub fn parse(self, input: &mut &[u8]) -> DataTypesCast {
+        pub fn parse(self, input: &[u8]) -> IResult<&[u8], DataTypesCast> {
             match self {
                 DataTypes::IEEE754LSBSingle => {
-                    DataTypesCast::IEEE754LSBSingle({
-                        let (bytes, _) = input.split_at(std::mem::size_of::<f32>());
-                        <f32>::from_le_bytes(bytes.try_into().unwrap())
-                    })
+                    let (tail, bytes) = nom::number::complete::le_f32(input)?;
+                    Ok((tail, DataTypesCast::IEEE754LSBSingle(bytes)))
                 }
                 DataTypes::IEEE754LSBDouble => {
-                    DataTypesCast::IEEE754LSBDouble({
-                        let (bytes, _) = input.split_at(std::mem::size_of::<f64>());
-                        <f64>::from_le_bytes(bytes.try_into().unwrap())
-                    })
+                    let (tail, bytes) = nom::number::complete::le_f64(input)?;
+                    Ok((tail, DataTypesCast::IEEE754LSBDouble(bytes)))
                 }
                 DataTypes::IEEE754LSBSingleArr2 => {
-                    DataTypesCast::IEEE754LSBSingleArr2({
-                        let mut tmp_vec = std::vec::Vec::new();
-                        for _ in 0..2 {
-                            let (bytes, rest) = input
-                                .split_at(std::mem::size_of::<f32>());
-                            let converted = <f32>::from_le_bytes(
-                                bytes.try_into().unwrap(),
-                            );
-                            *input = rest;
-                            tmp_vec.push(converted);
-                        }
-                        let out: [f32; 2] = tmp_vec
-                            .into_iter()
-                            .collect::<Vec<f32>>()
-                            .try_into()
-                            .unwrap();
-                        out
-                    })
+                    let (tail, elements_vec) = nom::multi::count(
+                        nom::number::complete::le_f32,
+                        2,
+                    )(input)?;
+                    let out: [f32; 2] = elements_vec
+                        .try_into()
+                        .map_err(|_| nom::Err::Failure(
+                            nom::error::Error::new(input, nom::error::ErrorKind::Fail),
+                        ))?;
+                    Ok((tail, DataTypesCast::IEEE754LSBSingleArr2(out)))
                 }
                 DataTypes::IEEE754LSBDoubleArr2 => {
-                    DataTypesCast::IEEE754LSBDoubleArr2({
-                        let mut tmp_vec = std::vec::Vec::new();
-                        for _ in 0..2 {
-                            let (bytes, rest) = input
-                                .split_at(std::mem::size_of::<f64>());
-                            let converted = <f64>::from_le_bytes(
-                                bytes.try_into().unwrap(),
-                            );
-                            *input = rest;
-                            tmp_vec.push(converted);
-                        }
-                        let out: [f64; 2] = tmp_vec
-                            .into_iter()
-                            .collect::<Vec<f64>>()
-                            .try_into()
-                            .unwrap();
-                        out
-                    })
+                    let (tail, elements_vec) = nom::multi::count(
+                        nom::number::complete::le_f64,
+                        2,
+                    )(input)?;
+                    let out: [f64; 2] = elements_vec
+                        .try_into()
+                        .map_err(|_| nom::Err::Failure(
+                            nom::error::Error::new(input, nom::error::ErrorKind::Fail),
+                        ))?;
+                    Ok((tail, DataTypesCast::IEEE754LSBDoubleArr2(out)))
                 }
                 DataTypes::IEEE754MSBSingleArr2 => {
-                    DataTypesCast::IEEE754MSBSingleArr2({
-                        let mut tmp_vec = std::vec::Vec::new();
-                        for _ in 0..2 {
-                            let (bytes, rest) = input
-                                .split_at(std::mem::size_of::<f32>());
-                            let converted = <f32>::from_le_bytes(
-                                bytes.try_into().unwrap(),
-                            );
-                            *input = rest;
-                            tmp_vec.push(converted);
-                        }
-                        let out: [f32; 2] = tmp_vec
-                            .into_iter()
-                            .collect::<Vec<f32>>()
-                            .try_into()
-                            .unwrap();
-                        out
-                    })
+                    let (tail, elements_vec) = nom::multi::count(
+                        nom::number::complete::be_f32,
+                        2,
+                    )(input)?;
+                    let out: [f32; 2] = elements_vec
+                        .try_into()
+                        .map_err(|_| nom::Err::Failure(
+                            nom::error::Error::new(input, nom::error::ErrorKind::Fail),
+                        ))?;
+                    Ok((tail, DataTypesCast::IEEE754MSBSingleArr2(out)))
                 }
                 DataTypes::IEEE754MSBDoubleArr2 => {
-                    DataTypesCast::IEEE754MSBDoubleArr2({
-                        let mut tmp_vec = std::vec::Vec::new();
-                        for _ in 0..2 {
-                            let (bytes, rest) = input
-                                .split_at(std::mem::size_of::<f64>());
-                            let converted = <f64>::from_le_bytes(
-                                bytes.try_into().unwrap(),
-                            );
-                            *input = rest;
-                            tmp_vec.push(converted);
-                        }
-                        let out: [f64; 2] = tmp_vec
-                            .into_iter()
-                            .collect::<Vec<f64>>()
-                            .try_into()
-                            .unwrap();
-                        out
-                    })
+                    let (tail, elements_vec) = nom::multi::count(
+                        nom::number::complete::be_f64,
+                        2,
+                    )(input)?;
+                    let out: [f64; 2] = elements_vec
+                        .try_into()
+                        .map_err(|_| nom::Err::Failure(
+                            nom::error::Error::new(input, nom::error::ErrorKind::Fail),
+                        ))?;
+                    Ok((tail, DataTypesCast::IEEE754MSBDoubleArr2(out)))
                 }
                 DataTypes::IEEE754LSBSingleArr3 => {
-                    DataTypesCast::IEEE754LSBSingleArr3({
-                        let mut tmp_vec = std::vec::Vec::new();
-                        for _ in 0..3 {
-                            let (bytes, rest) = input
-                                .split_at(std::mem::size_of::<f32>());
-                            let converted = <f32>::from_be_bytes(
-                                bytes.try_into().unwrap(),
-                            );
-                            *input = rest;
-                            tmp_vec.push(converted);
-                        }
-                        let out: [f32; 3] = tmp_vec
-                            .into_iter()
-                            .collect::<Vec<f32>>()
-                            .try_into()
-                            .unwrap();
-                        out
-                    })
+                    let (tail, elements_vec) = nom::multi::count(
+                        nom::number::complete::le_f32,
+                        3,
+                    )(input)?;
+                    let out: [f32; 3] = elements_vec
+                        .try_into()
+                        .map_err(|_| nom::Err::Failure(
+                            nom::error::Error::new(input, nom::error::ErrorKind::Fail),
+                        ))?;
+                    Ok((tail, DataTypesCast::IEEE754LSBSingleArr3(out)))
                 }
                 DataTypes::IEEE754LSBDoubleArr3 => {
-                    DataTypesCast::IEEE754LSBDoubleArr3({
-                        let mut tmp_vec = std::vec::Vec::new();
-                        for _ in 0..3 {
-                            let (bytes, rest) = input
-                                .split_at(std::mem::size_of::<f64>());
-                            let converted = <f64>::from_be_bytes(
-                                bytes.try_into().unwrap(),
-                            );
-                            *input = rest;
-                            tmp_vec.push(converted);
-                        }
-                        let out: [f64; 3] = tmp_vec
-                            .into_iter()
-                            .collect::<Vec<f64>>()
-                            .try_into()
-                            .unwrap();
-                        out
-                    })
+                    let (tail, elements_vec) = nom::multi::count(
+                        nom::number::complete::le_f64,
+                        3,
+                    )(input)?;
+                    let out: [f64; 3] = elements_vec
+                        .try_into()
+                        .map_err(|_| nom::Err::Failure(
+                            nom::error::Error::new(input, nom::error::ErrorKind::Fail),
+                        ))?;
+                    Ok((tail, DataTypesCast::IEEE754LSBDoubleArr3(out)))
                 }
                 DataTypes::ASCIIString => {
-                    DataTypesCast::ASCIIString(
-                        String::from_utf8(input.to_vec()).unwrap(),
-                    )
-                }
-            }
-        }
-    }
-    impl std::convert::TryInto<f32> for DataTypesCast {
-        type Error = String;
-        fn try_into(self) -> Result<f32, Self::Error> {
-            match self {
-                DataTypesCast::IEEE754LSBSingle(val) => Ok(val),
-                _ => {
-                    Err({
-                        let res = ::alloc::fmt::format(
-                            format_args!(
-                                "Cannot convert non-compatible DataTypesCast into {0}",
-                                "f32"
-                            ),
-                        );
-                        res
-                    })
+                    let (tail, bytes) = nom::bytes::complete::take_while1(|c: u8| {
+                        c.is_ascii()
+                    })(input)?;
+                    let string_result = String::from_utf8(bytes.to_vec())
+                        .map_err(|_| nom::Err::Failure(
+                            nom::error::Error::new(input, nom::error::ErrorKind::Fail),
+                        ))?;
+                    Ok((tail, DataTypesCast::ASCIIString(string_result)))
                 }
             }
         }
@@ -249,17 +183,17 @@
             }
         }
     }
-    impl std::convert::TryInto<String> for DataTypesCast {
+    impl std::convert::TryInto<[f32; 3]> for DataTypesCast {
         type Error = String;
-        fn try_into(self) -> Result<String, Self::Error> {
+        fn try_into(self) -> Result<[f32; 3], Self::Error> {
             match self {
-                DataTypesCast::ASCIIString(val) => Ok(val),
+                DataTypesCast::IEEE754LSBSingleArr3(val) => Ok(val),
                 _ => {
                     Err({
                         let res = ::alloc::fmt::format(
                             format_args!(
                                 "Cannot convert non-compatible DataTypesCast into {0}",
-                                "String"
+                                "[f32;3]"
                             ),
                         );
                         res
@@ -288,6 +222,25 @@
             }
         }
     }
+    impl std::convert::TryInto<f32> for DataTypesCast {
+        type Error = String;
+        fn try_into(self) -> Result<f32, Self::Error> {
+            match self {
+                DataTypesCast::IEEE754LSBSingle(val) => Ok(val),
+                _ => {
+                    Err({
+                        let res = ::alloc::fmt::format(
+                            format_args!(
+                                "Cannot convert non-compatible DataTypesCast into {0}",
+                                "f32"
+                            ),
+                        );
+                        res
+                    })
+                }
+            }
+        }
+    }
     impl std::convert::TryInto<[f64; 3]> for DataTypesCast {
         type Error = String;
         fn try_into(self) -> Result<[f64; 3], Self::Error> {
@@ -307,17 +260,17 @@
             }
         }
     }
-    impl std::convert::TryInto<[f32; 3]> for DataTypesCast {
+    impl std::convert::TryInto<String> for DataTypesCast {
         type Error = String;
-        fn try_into(self) -> Result<[f32; 3], Self::Error> {
+        fn try_into(self) -> Result<String, Self::Error> {
             match self {
-                DataTypesCast::IEEE754LSBSingleArr3(val) => Ok(val),
+                DataTypesCast::ASCIIString(val) => Ok(val),
                 _ => {
                     Err({
                         let res = ::alloc::fmt::format(
                             format_args!(
                                 "Cannot convert non-compatible DataTypesCast into {0}",
-                                "[f32;3]"
+                                "String"
                             ),
                         );
                         res

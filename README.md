@@ -62,34 +62,25 @@ Okay, but why not just define the DataTypesCast or ExampleEnumCast and skip the 
 Because the following are automatically generated:
 ```rust
 impl DataTypes {
-    pub fn parse(self, input: &mut &[u8]) -> DataTypesCast {
+        pub fn parse(self, input: &[u8]) -> IResult<&[u8], DataTypesCast> {
         match self {
             DataTypes::AnyCustomVariant => {
-                DataTypesCast::AnyCustomVariant({
-                    let (bytes, _) = input.split_at(std::mem::size_of::<f32>());
-                    <f32>::from_le_bytes(bytes.try_into().unwrap())
-                })
+                    let (tail, bytes) = nom::number::complete::le_f32(input)?;
+                    Ok((tail, DataTypesCast::AnyCustomVariant(bytes)))
             }
             // This can be generated for any sized array supported by the standard library
             DataTypes::AnyCustomVariant2 => {
-                DataTypesCast::AnyCustomVariant2({
-                    let mut tmp_vec = std::vec::Vec::new();
-                    for _ in 0..2 {
-                        let (bytes, rest) = input
-                            .split_at(std::mem::size_of::<f32>());
-                        let converted = <f32>::from_le_bytes(
-                            bytes.try_into().unwrap(),
-                        );
-                        *input = rest;
-                        tmp_vec.push(converted);
-                    }
-                    let out: [f32; 2] = tmp_vec
-                        .into_iter()
-                        .collect::<Vec<f32>>()
+                let (tail, elements_vec) = nom::multi::count(
+                        nom::number::complete::le_f32,
+                        2,
+                    )(input)?;
+                    let out: [f32; 2] = elements_vec
                         .try_into()
-                        .unwrap();
-                    out
-                })
+                        .map_err(|_| nom::Err::Failure(
+                            nom::error::Error::new(input, nom::error::ErrorKind::Fail),
+                        ))?;
+                    Ok((tail, DataTypesCast::AnyCustomVariant2(out)))
+
             }
         }
     }
